@@ -7,7 +7,7 @@ setup(
     name='personal',
     version='1.0.0',
     author='Ángel Luis García García',
-    author_email='angeluis78@email.com',
+    author_email='angelluis78@gmail.com',
     description='Gestión de personas',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -16,7 +16,9 @@ setup(
     include_package_data=True,  
     install_requires=[
         'reportlab',
-        'pyqt6' 
+        'sqlalchemy',
+        'pillow==9.0.1',
+        'pyqt6==6.5.2' 
         ],
     package_data={
            'personal': ['model/personal.db',
@@ -30,7 +32,7 @@ setup(
         ],
     },
     classifiers=[
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX :: Linux',

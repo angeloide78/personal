@@ -705,7 +705,7 @@ class DBManager:
  
         except SQLAlchemyError as e:
             
-            ret = False,  f"Error al dar de alta la persona: {e}"
+            ret = False, f"Error al dar de alta la persona: {e}"
 
         return ret
 

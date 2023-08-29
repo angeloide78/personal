@@ -1,6 +1,0 @@
-#!/bin/bash
-pyuic6 personal.ui -o view_personal.py 
-pyuic6 correos_electronicos.ui -o view_correos_electronicos.py 
-pyuic6 direcciones_postales.ui -o view_direcciones_postales.py 
-pyuic6 telefonos.ui -o view_telefonos.py 
-#pyuic6 acercade.ui -o view_acercade.py

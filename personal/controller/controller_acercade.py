@@ -30,3 +30,4 @@ class Dialog_Acercade(QtWidgets.QDialog):
         self.ui.setupUi(self)
         
         self.ui.label_icono.setPixmap(QtGui.QPixmap(ICONO_ACERCADE))
+        self.setWindowIcon(QtGui.QIcon(ICONO_ACERCADE))

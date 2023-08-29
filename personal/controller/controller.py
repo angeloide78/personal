@@ -108,6 +108,11 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
         # Se cargan los tipos de relaciones entre personas.
         self.poblar_tipo_relaciones()
        
+        # Se configuran las tablas de contacto.
+        self.conf_contacto("direccion_postal")
+        self.conf_contacto("mail")
+        self.conf_contacto("tlfno")
+        
         # Connect de Acerca de
         self.ui.pushButton_acerca_de.clicked.connect(self.acerca_de)
        
@@ -513,26 +518,26 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
           personas, según estado.
         - opcion =="alta". Se activan / desactivan el grupo de botones de
           eliminar usuario, crear usuario, y generar PDF.
-        - opcion =="relacion". Se desactivan todos los botones de las
-          operaciones, excepto cancelar.
+        - opcion == "relacion" / "en_edicion". Se desactivan todos los
+          botones de las operaciones, excepto cancelar.
          
         """
 
-        if opcion in ["personal", "relacion"]:
+        if opcion in ["personal", "relacion", "en_edicion"]:
             self.ui.groupBox_personal.setEnabled(estado)
-        if opcion in ["contacto", "relacion"]:
+        if opcion in ["contacto", "relacion", "en_edicion"]:
             self.ui.groupBox_contacto.setEnabled(estado)
-        if opcion in ["otros", "relacion"]:
+        if opcion in ["otros", "relacion", "en_edicion"]:
             self.ui.groupBox_otros.setEnabled(estado)
         if opcion == "buscar": self.ui.groupBox_buscar.setEnabled(estado)
-        if opcion in ["alta", "relacion"]:
+        if opcion in ["alta", "relacion", "en_edicion"]:
             self.ui.pushButton_alta_per.setEnabled(estado)
             self.ui.pushButton_baja_per.setEnabled(estado)
             self.ui.pushButton_imp_per.setEnabled(estado)
         # if opcion in ["relacion"]:
         #    self.ui.pushButton_guardar_per.setEnabled(estado)
             
-    def cargar_persona(self, id_):
+    def cargar_datos_personales(self, id_):
         """Carga datos de la persona con identificador id_ en las cajas"""
         
         bd = DBManager()
@@ -593,6 +598,23 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
                 
                 self.OnBorrarFoto()
                 
+    def cargar_persona(self, id_):
+        """Carga como persona actual la asociada a su identificador id_"""
+        
+        if len(id_.strip()) != 0:
+            # Datos personales.
+            self.cargar_datos_personales(int(id_))
+            # Correos electrónicos.
+            self.poblar_mails()
+            # Teléfonos.
+            self.poblar_tlfnos()
+            # Direcciones postales.
+            self.poblar_direcciones()
+            # Tipos de relacioón entre personas.
+            self.posicionar_tipo_relacion()
+            # Persona relacionada.
+            self.persona_relacionada()
+        
     def OnClickPersona(self):
         """Selecciona la persona y lleva sus datos a edición"""
         
@@ -610,19 +632,9 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
                 
             else:
                 
-                # Datos personales.
-                self.cargar_persona(int(id_))
-                # Correos electrónicos.
-                self.poblar_mails()
-                # Teléfonos.
-                self.poblar_tlfnos()
-                # Direcciones postales.
-                self.poblar_direcciones()
-                # Tipos de relacioón entre personas.
-                self.posicionar_tipo_relacion()
-                # Persona relacionada.
-                self.persona_relacionada()
-            
+                self.cargar_persona(id_)
+                self.__estado = "en_edicion"
+                
     def persona_relacionada(self):
         """Visualiza la persona relacionada con la persona actual"""
         
@@ -688,7 +700,39 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
         else:
             msg = "No se han hecho cambios en direcciones postales."
             self.mostrar_mensaje(msg, caja_texto = False)                    
-         
+        
+    def conf_contacto(self, opcion):
+        """Configura las columnas de las tablas de contacto"""
+       
+        if opcion == "direccion_postal":
+            self.ui.tableWidget_direccion_per.setRowCount(0)
+            self.ui.tableWidget_direccion_per.setColumnHidden(0, True)
+            self.ui.tableWidget_direccion_per.setColumnHidden(1, True)
+            self.ui.tableWidget_direccion_per.setColumnHidden(3, True)
+            self.ui.tableWidget_direccion_per.setColumnWidth(2, 200) # Dir.
+            self.ui.tableWidget_direccion_per.setColumnWidth(4, 50) # CP
+            self.ui.tableWidget_direccion_per.setColumnWidth(5, 200) # Loc.
+            self.ui.tableWidget_direccion_per.setColumnWidth(6, 200) # Prov.
+            self.ui.tableWidget_direccion_per.setColumnWidth(7, 80) # Pref.
+            self.ui.tableWidget_direccion_per.setColumnWidth(8, 200) # Obs.
+
+        if opcion == "mail":
+            self.ui.tableWidget_mail_per.setRowCount(0)
+            self.ui.tableWidget_mail_per.setColumnHidden(0, True)
+            self.ui.tableWidget_mail_per.setColumnHidden(1, True)
+            self.ui.tableWidget_mail_per.setColumnWidth(2, 200) # Mail
+            self.ui.tableWidget_mail_per.setColumnWidth(3, 100) # Prefer.
+            self.ui.tableWidget_mail_per.setColumnWidth(4, 200) # Observ.
+        
+        if opcion == "tlfno":
+            self.ui.tableWidget_tlfno_per.setRowCount(0)
+        
+            self.ui.tableWidget_tlfno_per.setColumnHidden(0, True)
+            self.ui.tableWidget_tlfno_per.setColumnHidden(1, True)
+            self.ui.tableWidget_tlfno_per.setColumnWidth(2, 200) # Teléfono
+            self.ui.tableWidget_tlfno_per.setColumnWidth(3, 100) # Prefer.
+            self.ui.tableWidget_tlfno_per.setColumnWidth(4, 200) # Observ.
+            
     def poblar_direcciones(self):
         """Puebla las direcciones postales de la persona actual"""
         
@@ -704,19 +748,8 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
             ret = bd.obtener_direcciones_por_persona_id(persona_id)
             
             if ret[0]:
-                                               
-                self.ui.tableWidget_direccion_per.setRowCount(0)
-           
-                self.ui.tableWidget_direccion_per.setColumnHidden(0, True)
-                self.ui.tableWidget_direccion_per.setColumnHidden(1, True)
-                self.ui.tableWidget_direccion_per.setColumnHidden(3, True)
-                self.ui.tableWidget_direccion_per.setColumnWidth(2, 200) # Dir.
-                self.ui.tableWidget_direccion_per.setColumnWidth(4, 50) # CP
-                self.ui.tableWidget_direccion_per.setColumnWidth(5, 200) # Loc.
-                self.ui.tableWidget_direccion_per.setColumnWidth(6, 200) # Prov.
-                self.ui.tableWidget_direccion_per.setColumnWidth(7, 80) # Pref.
-                self.ui.tableWidget_direccion_per.setColumnWidth(8, 200) # Obs.
-                                                
+                
+                self.conf_contacto("direccion_postal")                               
                 self.ui.tableWidget_direccion_per.setRowCount(len(ret[1]))
                 
                 # Poblamos.
@@ -773,14 +806,7 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
                 # msg = f"Recuperados {len(ret[1])} mails." 
                 # self.mostrar_mensaje(msg, caja_texto = False)
                                 
-                self.ui.tableWidget_mail_per.setRowCount(0)
-           
-                self.ui.tableWidget_mail_per.setColumnHidden(0, True)
-                self.ui.tableWidget_mail_per.setColumnHidden(1, True)
-                self.ui.tableWidget_mail_per.setColumnWidth(2, 200) # Mail
-                self.ui.tableWidget_mail_per.setColumnWidth(3, 100) # Prefer.
-                self.ui.tableWidget_mail_per.setColumnWidth(4, 200) # Observ.
-                                                
+                self.conf_contacto("mail")
                 self.ui.tableWidget_mail_per.setRowCount(len(ret[1]))
                 
                 # Poblamos.
@@ -828,14 +854,7 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
                 # msg = f"Recuperados {len(ret[1])} teléfonos." 
                 # self.mostrar_mensaje(msg, caja_texto = False)
                                 
-                self.ui.tableWidget_tlfno_per.setRowCount(0)
-           
-                self.ui.tableWidget_tlfno_per.setColumnHidden(0, True)
-                self.ui.tableWidget_tlfno_per.setColumnHidden(1, True)
-                self.ui.tableWidget_tlfno_per.setColumnWidth(2, 200) # Teléfono
-                self.ui.tableWidget_tlfno_per.setColumnWidth(3, 100) # Prefer.
-                self.ui.tableWidget_tlfno_per.setColumnWidth(4, 200) # Observ.
-                                                
+                self.conf_contacto("tlfno")     
                 self.ui.tableWidget_tlfno_per.setRowCount(len(ret[1]))
                 
                 # Poblamos.
@@ -1080,8 +1099,9 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
         """Borra la persona actual"""
         
         id_ = self.ui.lineEdit_nrp_per.text().strip() 
-        if self.__estado == "en_edicion" and \
-           len(id_) == 0:
+        #if self.__estado == "en_edicion" and \
+        #   len(id_) == 0:
+        if len(id_) == 0:
             self.mostrar_mensaje("No hay nada que eliminar", caja_texto = False)
         else:
             
@@ -1094,7 +1114,7 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
                 if ret[0]:
                     msg = f"Se ha eliminado la persona correctamente." 
                     self.mostrar_mensaje(msg, caja_texto = False)
-                    self.OnCancelarPersona()
+                    self.cancelar_persona(False)
                     self.poblar_personas()
                 else:
                     msg = "Error al eliminar a la persona actual"
@@ -1103,30 +1123,44 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
                                          detalle=str(ret[1]),
                                          icono="critico")                
 
+    def cancelar_persona(self, recargar_persona = True):
+        """Cancela operación"""
+        
+        id_ = self.ui.lineEdit_nrp_per.text()
+
+        # Se limpian cajas de texto.
+        for i in ["personal", "contacto", "otros"]: self.limpiar_datos(i)
+                
+        if recargar_persona:
+            
+            if self.__estado in ["en_edicion", "relacion"]:
+                if recargar_persona: self.cargar_persona(id_)
+                self.__estado = "en_edicion"
+                if id_ != "": self.activar_elementos("en_edicion")
+                    
+            if self.__estado == "relacion":
+                self.activar_elementos("relacion")
+                
+            if self.__estado == "alta":
+                    
+                # Se activa la búsqueda y la posibilidad de alta.
+                for i in ["buscar", "alta"]: self.activar_elementos(i, True)
+                
+                # Se desactiva lo demás
+                for i in ["contacto", "otros",  "personal"]:
+                    self.activar_elementos(i, False)
+                
+                self.__foto = None
+        
+        else:
+            self.activar_elementos("en_edicion", False)
+            self.activar_elementos("alta", True)
+                        
     def OnCancelarPersona(self):
         """Cancela la operación que se esté realizando"""
         
-        if self.__estado == "relacion":
-            
-            self.activar_elementos("relacion")
-            self.__estado = "en_edicion"
-            # self.OnBorrarRel()
+        self.cancelar_persona()
         
-        else:
-                
-            # Se limpian cajas de texto.
-            for i in ["personal", "contacto", "otros"]: self.limpiar_datos(i)
-                 
-            # Se activa la búsqueda y la posibilidad de alta.
-            for i in ["buscar", "alta"]: self.activar_elementos(i, True)
-            
-            # Se desactiva lo demás
-            for i in ["contacto", "otros",  "personal"]:
-                self.activar_elementos(i, False)
-            
-        self.__estado = "en_edicion"
-        self.__foto = None
-
     def OnAltaPersona(self):
         """Da de alta una persona en el sistema"""
         
@@ -1146,8 +1180,10 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
     def OnGuardarPersona(self):
         """Crea una persona nueva (datos pesonales) en el sistema"""
         
-        if self.__estado == "en_edicion" and \
-           len(self.ui.lineEdit_nrp_per.text().strip()) == 0:
+        # if self.__estado == "en_edicion" and \
+        #    len(self.ui.lineEdit_nrp_per.text().strip()) == 0:
+        if len(self.ui.lineEdit_nrp_per.text().strip()) == 0 and \
+           self.__estado not in ["alta"]: 
             self.mostrar_mensaje("No hay nada que guardar", caja_texto = False)
         
         else:
@@ -1221,6 +1257,9 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
                                           ap1.strip(), ap2.strip(),
                                           fecha_formateada, foto, sexo)
                     aux = "dado de alta"
+                    
+                    # Se incluye el id_ como NRP.
+                    # self.ui.lineEdit_nrp_per.setText(str(ret[1]))
                 
                 if self.__estado == "en_edicion":
                     
@@ -1252,7 +1291,8 @@ class VentanaPrincipal(QtWidgets.QMainWindow):
                     
                     # Se activan todos los botones.
                     
-                    for i in ["contacto", "otros", "buscar", "alta"]:
+                    for i in ["personal", "contacto",
+                              "otros", "buscar", "alta"]:
                         self.activar_elementos(i)
                     
                     
